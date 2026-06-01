@@ -1,0 +1,13 @@
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\bin\Debug\Giao diện ROBOT.exe.config
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\bin\Debug\Giao diện ROBOT.exe
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\bin\Debug\Giao diện ROBOT.pdb
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\bin\Debug\RoboDkApi.dll
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\bin\Debug\RoboDkApi.pdb
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao diện ROBOT.csproj.AssemblyReference.cache
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao_diện_ROBOT.Form1.resources
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao_diện_ROBOT.Properties.Resources.resources
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao diện ROBOT.csproj.GenerateResource.cache
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao diện ROBOT.csproj.CoreCompileInputs.cache
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao di_.60B7D8EC.Up2Date
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao diện ROBOT.exe
+C:\Users\ADMIN\source\repos\Giao diện ROBOT\Giao diện ROBOT\obj\Debug\Giao diện ROBOT.pdb
