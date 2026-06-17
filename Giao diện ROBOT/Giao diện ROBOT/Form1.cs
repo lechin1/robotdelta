@@ -27,8 +27,9 @@ namespace Giao_diện_ROBOT
 
         // flag to prevent recursive TextChanged handlers when updating controls programmatically
         private bool updatingPosition = false;
-        private object giatritoadoY;
-        private object giatritoadoZ;
+        private double x;
+        private double y;
+        private double z;
 
         public object DeltaKinematics { get; private set; }
 
@@ -91,7 +92,7 @@ namespace Giao_diện_ROBOT
             // 
             // dichuyencongX
             // 
-            this.dichuyencongX.Location = new System.Drawing.Point(128, 73);
+            this.dichuyencongX.Location = new System.Drawing.Point(121, 73);
             this.dichuyencongX.Name = "dichuyencongX";
             this.dichuyencongX.Size = new System.Drawing.Size(74, 37);
             this.dichuyencongX.TabIndex = 1;
@@ -111,7 +112,7 @@ namespace Giao_diện_ROBOT
             // 
             // dichuyencongY
             // 
-            this.dichuyencongY.Location = new System.Drawing.Point(128, 116);
+            this.dichuyencongY.Location = new System.Drawing.Point(121, 116);
             this.dichuyencongY.Name = "dichuyencongY";
             this.dichuyencongY.Size = new System.Drawing.Size(74, 42);
             this.dichuyencongY.TabIndex = 3;
@@ -131,7 +132,7 @@ namespace Giao_diện_ROBOT
             // 
             // dichuyencongZ
             // 
-            this.dichuyencongZ.Location = new System.Drawing.Point(128, 164);
+            this.dichuyencongZ.Location = new System.Drawing.Point(121, 164);
             this.dichuyencongZ.Name = "dichuyencongZ";
             this.dichuyencongZ.Size = new System.Drawing.Size(74, 43);
             this.dichuyencongZ.TabIndex = 5;
@@ -170,6 +171,7 @@ namespace Giao_diện_ROBOT
             // 
             // contextMenuStrip1
             // 
+            this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
@@ -184,16 +186,16 @@ namespace Giao_diện_ROBOT
             this.groupBox1.Controls.Add(this.GiatritoadoZ);
             this.groupBox1.Location = new System.Drawing.Point(23, 262);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(178, 135);
+            this.groupBox1.Size = new System.Drawing.Size(172, 145);
             this.groupBox1.TabIndex = 18;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Positions";
             // 
             // updatetoado
             // 
-            this.updatetoado.Location = new System.Drawing.Point(49, 98);
+            this.updatetoado.Location = new System.Drawing.Point(31, 103);
             this.updatetoado.Name = "updatetoado";
-            this.updatetoado.Size = new System.Drawing.Size(101, 31);
+            this.updatetoado.Size = new System.Drawing.Size(123, 31);
             this.updatetoado.TabIndex = 22;
             this.updatetoado.Text = "Update position";
             this.updatetoado.UseVisualStyleBackColor = true;
@@ -228,25 +230,25 @@ namespace Giao_diện_ROBOT
             // 
             // giatritoadoX
             // 
-            this.giatritoadoX.Location = new System.Drawing.Point(49, 20);
+            this.giatritoadoX.Location = new System.Drawing.Point(31, 20);
             this.giatritoadoX.Name = "giatritoadoX";
-            this.giatritoadoX.Size = new System.Drawing.Size(100, 20);
+            this.giatritoadoX.Size = new System.Drawing.Size(122, 20);
             this.giatritoadoX.TabIndex = 4;
             this.giatritoadoX.TextChanged += new System.EventHandler(this.giatritoadoX_TextChanged);
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(49, 46);
+            this.textBox1.Location = new System.Drawing.Point(31, 48);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(100, 20);
+            this.textBox1.Size = new System.Drawing.Size(123, 20);
             this.textBox1.TabIndex = 3;
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // GiatritoadoZ
             // 
-            this.GiatritoadoZ.Location = new System.Drawing.Point(49, 72);
+            this.GiatritoadoZ.Location = new System.Drawing.Point(31, 75);
             this.GiatritoadoZ.Name = "GiatritoadoZ";
-            this.GiatritoadoZ.Size = new System.Drawing.Size(100, 20);
+            this.GiatritoadoZ.Size = new System.Drawing.Size(123, 20);
             this.GiatritoadoZ.TabIndex = 2;
             this.GiatritoadoZ.TextChanged += new System.EventHandler(this.GiatritoadoZ_TextChanged);
             // 
@@ -261,16 +263,16 @@ namespace Giao_diện_ROBOT
             this.groupBox2.Controls.Add(this.theta1);
             this.groupBox2.Location = new System.Drawing.Point(23, 427);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(178, 135);
+            this.groupBox2.Size = new System.Drawing.Size(172, 135);
             this.groupBox2.TabIndex = 19;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Degrees";
             // 
             // capnhatgoc
             // 
-            this.capnhatgoc.Location = new System.Drawing.Point(48, 98);
+            this.capnhatgoc.Location = new System.Drawing.Point(31, 98);
             this.capnhatgoc.Name = "capnhatgoc";
-            this.capnhatgoc.Size = new System.Drawing.Size(101, 31);
+            this.capnhatgoc.Size = new System.Drawing.Size(123, 31);
             this.capnhatgoc.TabIndex = 23;
             this.capnhatgoc.Text = "Update Degrees";
             this.capnhatgoc.UseVisualStyleBackColor = true;
@@ -278,25 +280,25 @@ namespace Giao_diện_ROBOT
             // 
             // Giatritheta3
             // 
-            this.Giatritheta3.Location = new System.Drawing.Point(50, 72);
+            this.Giatritheta3.Location = new System.Drawing.Point(31, 73);
             this.Giatritheta3.Name = "Giatritheta3";
-            this.Giatritheta3.Size = new System.Drawing.Size(100, 20);
+            this.Giatritheta3.Size = new System.Drawing.Size(122, 20);
             this.Giatritheta3.TabIndex = 18;
             this.Giatritheta3.TextChanged += new System.EventHandler(this.Giatritheta3_TextChanged);
             // 
             // Giatritheta2
             // 
-            this.Giatritheta2.Location = new System.Drawing.Point(50, 46);
+            this.Giatritheta2.Location = new System.Drawing.Point(31, 49);
             this.Giatritheta2.Name = "Giatritheta2";
-            this.Giatritheta2.Size = new System.Drawing.Size(100, 20);
+            this.Giatritheta2.Size = new System.Drawing.Size(122, 20);
             this.Giatritheta2.TabIndex = 17;
             this.Giatritheta2.TextChanged += new System.EventHandler(this.Giatritheta2_TextChanged);
             // 
             // Giatritheta1
             // 
-            this.Giatritheta1.Location = new System.Drawing.Point(50, 19);
+            this.Giatritheta1.Location = new System.Drawing.Point(31, 23);
             this.Giatritheta1.Name = "Giatritheta1";
-            this.Giatritheta1.Size = new System.Drawing.Size(100, 20);
+            this.Giatritheta1.Size = new System.Drawing.Size(122, 20);
             this.Giatritheta1.TabIndex = 5;
             this.Giatritheta1.TextChanged += new System.EventHandler(this.Giatritheta1_TextChanged);
             // 
@@ -331,7 +333,7 @@ namespace Giao_diện_ROBOT
             // 
             this.buttonhome.Location = new System.Drawing.Point(23, 213);
             this.buttonhome.Name = "buttonhome";
-            this.buttonhome.Size = new System.Drawing.Size(179, 33);
+            this.buttonhome.Size = new System.Drawing.Size(172, 33);
             this.buttonhome.TabIndex = 9;
             this.buttonhome.Text = "Home";
             this.buttonhome.UseVisualStyleBackColor = true;
@@ -350,6 +352,7 @@ namespace Giao_diện_ROBOT
             // 
             // contextMenuStrip2
             // 
+            this.contextMenuStrip2.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.contextMenuStrip2.Name = "contextMenuStrip2";
             this.contextMenuStrip2.Size = new System.Drawing.Size(61, 4);
             // 
@@ -516,10 +519,10 @@ namespace Giao_diện_ROBOT
                     try { robot.WaitMove(); } catch { }
 
                     // Cập nhật XYZ
-                    UpdatePosition();
+                   UpdatePosition();
 
                     // Cập nhật Joint RoboDK
-                    UpdateJointAngles();
+                 
 
                     // Cập nhật Theta Delta
                     try
@@ -527,17 +530,14 @@ namespace Giao_diện_ROBOT
                         double[] p = robot.Pose().Pos();
 
                         double[] theta =
-                            RobotDelta.DeltaKinematics.Inverse(
-                                p[0],
-                                p[1],
-                                p[2]);
+    RobotDelta.DeltaKinematics.Inverse(
+        p[0],
+        p[1],
+        p[2]);
 
-                        if (theta != null)
-                        {
-                            Giatritheta1.Text = theta[0].ToString("F2");
-                            Giatritheta2.Text = theta[1].ToString("F2");
-                            Giatritheta3.Text = theta[2].ToString("F2");
-                        }
+                        Giatritheta1.Text = theta[0].ToString("F6");
+                        Giatritheta2.Text = theta[1].ToString("F6");
+                        Giatritheta3.Text = theta[2].ToString("F6");
                     }
                     catch
                     {
@@ -554,8 +554,8 @@ namespace Giao_diện_ROBOT
 
                     try { robot.WaitMove(); } catch { }
 
-                    UpdatePosition();
-                    UpdateJointAngles();
+                   UpdatePosition();
+                    UpdateDeltaAngles();
 
                     try
                     {
@@ -569,9 +569,9 @@ namespace Giao_diện_ROBOT
 
                         if (theta != null)
                         {
-                            Giatritheta1.Text = theta[0].ToString("F2");
-                            Giatritheta2.Text = theta[1].ToString("F2");
-                            Giatritheta3.Text = theta[2].ToString("F2");
+                            Giatritheta1.Text = theta[0].ToString("F6");
+                            Giatritheta2.Text = theta[1].ToString("F6");
+                            Giatritheta3.Text = theta[2].ToString("F6");
                         }
                     }
                     catch
@@ -590,8 +590,8 @@ namespace Giao_diện_ROBOT
                     {
                         robot.MoveJ(homeTarget);
                         try { robot.WaitMove(); } catch { }
-                        UpdatePosition();
-                        UpdateJointAngles();
+                      UpdatePosition();
+                       UpdateDeltaAngles();
                         return;
                     }
                 }
@@ -603,7 +603,30 @@ namespace Giao_diện_ROBOT
             {
                 MessageBox.Show("Failed to move robot to home: " + ex.Message);
             }
-        } 
+
+        }
+        private void UpdateDeltaAngles()
+        {
+            try
+            {
+                double[] p = robot.Pose().Pos();
+
+                double[] theta =
+                    RobotDelta.DeltaKinematics.Inverse(
+                        p[0],
+                        p[1],
+                        p[2]);
+
+                if (theta == null) return;
+
+                Giatritheta1.Text = theta[0].ToString("F6");
+                Giatritheta2.Text = theta[1].ToString("F6");
+                Giatritheta3.Text = theta[2].ToString("F6");
+            }
+            catch
+            {
+            }
+        }
         private void UpdatePosition()
         {
             if (robot == null || !robot.Valid()) return;
@@ -743,8 +766,8 @@ namespace Giao_diện_ROBOT
 
             // Calculate theta using DeltaKinematics
             // Cập nhật XYZ
-            UpdatePosition();
-            UpdateJointAngles();
+            //UpdatePosition();
+         UpdateDeltaAngles();
 
             // Tính theta Delta
             try
@@ -758,9 +781,9 @@ namespace Giao_diện_ROBOT
 
                 if (theta != null)
                 {
-                    Giatritheta1.Text = theta[0].ToString("F2");
-                    Giatritheta2.Text = theta[1].ToString("F2");
-                    Giatritheta3.Text = theta[2].ToString("F2");
+                    Giatritheta1.Text = theta[0].ToString("F6");
+                    Giatritheta2.Text = theta[1].ToString("F6");
+                    Giatritheta3.Text = theta[2].ToString("F6");
                 }
             }
             catch (Exception ex)
@@ -775,18 +798,18 @@ namespace Giao_diện_ROBOT
 
         private void UpdateJointAngles()
         {
-            if (robot == null)
-                return;
+            //if (robot == null)
+               // return;
 
-            double[] joints = robot.Joints();
-            if (joints == null || joints.Length < 3)
-                return;
+           // double[] joints = robot.Joints();
+           // if (joints == null || joints.Length < 3)
+              //  return;
 
             // Update the degree labels (theta1/2/3) and the angle textboxes (Giatritheta1/2/3)
-           
-            try { Giatritheta1.Text = joints[0].ToString("F2"); } catch { }
-            try { Giatritheta2.Text = joints[1].ToString("F2"); } catch { }
-            try { Giatritheta3.Text = joints[2].ToString("F2"); } catch { }
+
+           // Giatritheta1.Text = joints[0].ToString("F6");
+           // Giatritheta2.Text = joints[1].ToString("F6");
+           // Giatritheta3.Text = joints[2].ToString("F6");
         }
 
         private void button1_Click_1(object sender, EventArgs e)
@@ -800,144 +823,61 @@ namespace Giao_diện_ROBOT
 
         }
 
-        private void button1_Click_2(object sender, EventArgs e)
-        {  if (robot == null || !robot.Valid())
-    {
-        MessageBox.Show("Hãy chọn robot trước");
-        return;
-    }
+     
 
-    try
-    {
-        double x = Convert.ToDouble(giatritoadoX.Text);
-        double y = Convert.ToDouble(textBox1.Text);
-        double z = Convert.ToDouble(GiatritoadoZ.Text);
-
-        // Tính theta từ XYZ
-        double[] theta =
-            RobotDelta.DeltaKinematics.Inverse(x, y, z);
-
-        if (theta == null)
-        {
-            MessageBox.Show("Không tính được động học nghịch");
-            return;
-        }
-
-        Giatritheta1.Text = theta[0].ToString("F2");
-        Giatritheta2.Text = theta[1].ToString("F2");
-        Giatritheta3.Text = theta[2].ToString("F2");
-
-        Mat pose = robot.Pose();
-
-        pose.setPos(new double[]
-        {
-            x,
-            y,
-            z
-        });
-
-        RoboDK.Item target = RDK.AddTarget("InputXYZ");
-
-        target.setPose(pose);
-
-        robot.MoveL(target);
-
-        try { robot.WaitMove(); } catch { }
-
-        target.Delete();
-
-        UpdatePosition();
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show(ex.Message);
-    }
-
-        }
-
-        private void updatetoado_Click(object sender, EventArgs e)
-        {
+      private void updatetoado_Click(object sender, EventArgs e)
+{
             try
             {
-                // Ensure RoboDK connection
-                if (RDK == null) RDK = new RoboDK();
-                if (!RDK.Connected())
-                {
-                    if (!RDK.Connect())
-                    {
-                        MessageBox.Show("RoboDK is not connected. Start RoboDK or check the connection.");
-                        return;
-                    }
-                }
+                // Đọc tọa độ từ giao diện
+                double x = Convert.ToDouble(giatritoadoX.Text);
+                double y = Convert.ToDouble(textBox1.Text);
+                double z = Convert.ToDouble(GiatritoadoZ.Text);
 
-                // Ensure robot selected
-                if (robot == null || !robot.Valid())
+                Console.WriteLine($"IK Input: X={x} Y={y} Z={z}");
+
+                // Động học nghịch
+                double[] theta =
+                    RobotDelta.DeltaKinematics.Inverse(
+                        x,
+                        y,
+                        z);
+
+                if (theta == null)
                 {
-                    MessageBox.Show("Hãy chọn robot trước");
+                    MessageBox.Show("Không tính được động học nghịch");
                     return;
                 }
 
-                // Robust parse helper: try invariant then current culture
-                bool ParseDouble(string s, out double value)
-                {
-                    if (double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value))
-                        return true;
-                    if (double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out value))
-                        return true;
-                    value = 0;
-                    return false;
-                }
+                // Hiển thị góc lên giao diện
+                Giatritheta1.Text = theta[0].ToString("F3");
+                Giatritheta2.Text = theta[1].ToString("F3");
+                Giatritheta3.Text = theta[2].ToString("F3");
 
-                if (!ParseDouble(giatritoadoX.Text, out double x) ||
-                    !ParseDouble(textBox1.Text, out double y) ||
-                    !ParseDouble(GiatritoadoZ.Text, out double z))
-                {
-                    MessageBox.Show("Invalid XYZ input. Use numeric coordinates, e.g. 100.000");
-                    return;
-                }
+                Console.WriteLine(
+                    $"IK Output: {theta[0]:F3} {theta[1]:F3} {theta[2]:F3}");
 
-                // Compute forward kinematics (XYZ -> theta)
-                double[] theta = RobotDelta.DeltaKinematics.Forward(x, y, z);
-                if (theta == null || theta.Length < 3)
+                // Di chuyển robot
+                robot.MoveJ(new double[]
                 {
-                    MessageBox.Show($"Forward kinematics failed for position X={x:F3}, Y={y:F3}, Z={z:F3}");
-                    return;
-                }
+            theta[0],
+            theta[1],
+            theta[2]
+                });
 
-                // Update theta textboxes (marshal to UI thread if necessary)
-                Action updateAngles = () =>
-                {
-                    Giatritheta1.Text = theta[0].ToString("F2", System.Globalization.CultureInfo.CurrentCulture);
-                    Giatritheta2.Text = theta[1].ToString("F2", System.Globalization.CultureInfo.CurrentCulture);
-                    Giatritheta3.Text = theta[2].ToString("F2", System.Globalization.CultureInfo.CurrentCulture);
-                };
-                if (this.InvokeRequired) this.Invoke(updateAngles); else updateAngles();
+                robot.WaitMove();
 
-                // Move robot to the requested XYZ
-                Mat pose = robot.Pose();
-                pose.setPos(new double[] { x, y, z });
-
-                RoboDK.Item target = RDK.AddTarget("IK_Target_" + Guid.NewGuid().ToString("N"));
-                try
-                {
-                    target.setPose(pose);
-                    robot.MoveL(target);
-                    try { robot.WaitMove(); } catch { }
-                }
-                finally
-                {
-                    try { target.Delete(); } catch { }
-                }
-
-                // Refresh UI after move
+                // Cập nhật lại vị trí thực tế
                 UpdatePosition();
-                UpdateJointAngles();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error performing forward kinematics / moving robot:\n" + ex.ToString());
+                MessageBox.Show(ex.Message);
             }
         }
+        
+
+        
         
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -956,121 +896,45 @@ namespace Giao_diện_ROBOT
         {
             try
             {
-                if (RDK == null) RDK = new RoboDK();
-                if (!RDK.Connected() && !RDK.Connect())
+                double t1 = Convert.ToDouble(Giatritheta1.Text);
+                double t2 = Convert.ToDouble(Giatritheta2.Text);
+                double t3 = Convert.ToDouble(Giatritheta3.Text);
+
+                // Động học thuận DeltaMessageBox.Show(
+                
+                Console.WriteLine($"FK Input: {t1} {t2} {t3}");
+                double[] xyz =
+                    RobotDelta.DeltaKinematics.Forward(
+                        t1,
+                        t2,
+                        t3);
+       
+                double[] joints = robot.Joints();
+                
+                if (xyz == null)
                 {
-                    MessageBox.Show("RoboDK is not connected. Start RoboDK or check the connection.");
+                    MessageBox.Show("Không tính được động học thuận");
                     return;
                 }
 
-                if (robot == null || !robot.Valid())
-                {
-                    MessageBox.Show("Hãy chọn robot trước");
-                    return;
-                }
+                // Hiển thị tọa độ
+                giatritoadoX.Text = xyz[0].ToString("F3");
+                textBox1.Text = xyz[1].ToString("F3");
+                GiatritoadoZ.Text = xyz[2].ToString("F3");
+                robot.MoveJ(new double[]
+                  {
+                 t1,
+                    t2,
+                        t3
+                            });
 
-                // robust parse helper
-                bool TryParseDouble(string s, out double v)
-                {
-                    if (double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v))
-                        return true;
-                    if (double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out v))
-                        return true;
-                    v = 0;
-                    return false;
-                }
-
-                // Try to read theta inputs first (if user entered degrees)
-                bool hasThetaInput = !string.IsNullOrWhiteSpace(Giatritheta1.Text)
-                                     || !string.IsNullOrWhiteSpace(Giatritheta2.Text)
-                                     || !string.IsNullOrWhiteSpace(Giatritheta3.Text);
-
-                if (hasThetaInput)
-                {
-                    // parse theta (angles -> XYZ using Forward)
-                    if (!TryParseDouble(Giatritheta1.Text, out double t1) ||
-                        !TryParseDouble(Giatritheta2.Text, out double t2) ||
-                        !TryParseDouble(Giatritheta3.Text, out double t3))
-                    {
-                        MessageBox.Show("Invalid theta input. Use numeric angles (degrees).");
-                        return;
-                    }
-
-                    double[] xyz = RobotDelta.DeltaKinematics.Forward(t1, t2, t3);
-                    if (xyz == null || xyz.Length < 3)
-                    {
-                        MessageBox.Show("Forward kinematics failed for the given angles.");
-                        return;
-                    }
-
-                    // update position textboxes
-                    Action updatePos = () =>
-                    {
-                        giatritoadoX.Text = xyz[0].ToString("F3", System.Globalization.CultureInfo.CurrentCulture);
-                        textBox1.Text = xyz[1].ToString("F3", System.Globalization.CultureInfo.CurrentCulture);
-                        GiatritoadoZ.Text = xyz[2].ToString("F3", System.Globalization.CultureInfo.CurrentCulture);
-                    };
-                    if (this.InvokeRequired) this.Invoke(updatePos); else updatePos();
-
-                    // move robot
-                    Mat pose = robot.Pose();
-                    pose.setPos(new double[] { xyz[0], xyz[1], xyz[2] });
-                    RoboDK.Item target = RDK.AddTarget("FK_FromTheta");
-                    try
-                    {
-                        target.setPose(pose);
-                        robot.MoveL(target);
-                        try { robot.WaitMove(); } catch { }
-                    }
-                    finally { try { target.Delete(); } catch { } }
-
-                    UpdatePosition();
-                    UpdateJointAngles();
-                    return;
-                }
-
-                // Otherwise treat user input as XYZ -> compute angles (Inverse)
-                if (!TryParseDouble(giatritoadoX.Text, out double x) ||
-                    !TryParseDouble(textBox1.Text, out double y) ||
-                    !TryParseDouble(GiatritoadoZ.Text, out double z))
-                {
-                    MessageBox.Show("Invalid XYZ input. Use numeric coordinates, e.g. 100.000");
-                    return;
-                }
-
-                double[] thetaResult = RobotDelta.DeltaKinematics.Inverse(x, y, z);
-                if (thetaResult == null || thetaResult.Length < 3)
-                {
-                    MessageBox.Show("Inverse kinematics failed for the given position.");
-                    return;
-                }
-
-                Action updateAngles = () =>
-                {
-                    Giatritheta1.Text = thetaResult[0].ToString("F2", System.Globalization.CultureInfo.CurrentCulture);
-                    Giatritheta2.Text = thetaResult[1].ToString("F2", System.Globalization.CultureInfo.CurrentCulture);
-                    Giatritheta3.Text = thetaResult[2].ToString("F2", System.Globalization.CultureInfo.CurrentCulture);
-                };
-                if (this.InvokeRequired) this.Invoke(updateAngles); else updateAngles();
-
-                // move robot to XYZ
-                Mat pose2 = robot.Pose();
-                pose2.setPos(new double[] { x, y, z });
-                RoboDK.Item target2 = RDK.AddTarget("IK_Target_" + Guid.NewGuid().ToString("N"));
-                try
-                {
-                    target2.setPose(pose2);
-                    robot.MoveL(target2);
-                    try { robot.WaitMove(); } catch { }
-                }
-                finally { try { target2.Delete(); } catch { } }
-
-                UpdatePosition();
-                UpdateJointAngles();
+                robot.WaitMove();
+                
+             UpdatePosition();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error performing kinematics / moving robot:\n" + ex.ToString());
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -1091,10 +955,15 @@ namespace Giao_diện_ROBOT
             manualEditingTheta = true;
         
         }
-    
-    }
-}
-       
-        
 
-    
+       
+
+      
+    }
+
+}
+
+
+
+
+

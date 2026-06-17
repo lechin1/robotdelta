@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RobotDelta
 {
@@ -26,27 +22,22 @@ namespace RobotDelta
             return new double[] { x, y, z };
         }
 
+        // Internal implementation adapted from standard Delta robot kinematics
         public static class DeltaRobot
         {
             // ================================
-            // THÔNG SỐ HÌNH HỌC ROBOT
+            // GEOMETRY PARAMETERS
             // ================================
-            // e: bán kính đế di động
-            static double e = 156.321;// e=E/2√3 Với L1 cạnh bên tam giác đế di động 
-
-            // f: bán kính đế cố định
-            static double f = 692.820;// f=F/2√3 Với L2 cạnh bên tam giác đế cố định 
-
-            // re: chiều dài cánh tay (forearm)
+            // e: moving platform radius parameter
+            static double e = 156.321; // e = E / (2*sqrt(3))
+            // f: fixed base radius parameter
+            static double f = 692.820; // f = F / (2*sqrt(3))
+            // re: forearm length
             static double re = 800;
-
-            // rf: chiều dài cẳng tay (bicep)
+            // rf: bicep length
             static double rf = 350;
 
-            // ================================
-            // THÔNG SỐ HẰNG SỐ LƯỢNG GIÁC
-            // ================================
-
+            // trig constants
             static double sqrt3 = Math.Sqrt(3.0);
             const double pi = Math.PI;
             static double sin120 = sqrt3 / 2.0;
@@ -54,15 +45,12 @@ namespace RobotDelta
             static double tan60 = sqrt3;
             static double sin30 = 0.5;
             static double tan30 = 1.0 / sqrt3;
-            private static int yDelta;
 
             // ================================
-            // ĐỘNG HỌC THUẬN (FORWARD)
-            // INPUT: theta1, theta2, theta3 (độ)
-            // OUTPUT: (x0, y0, z0)
+            // FORWARD KINEMATICS (Delta frame -> RoboDK frame)
+            // INPUT: theta1, theta2, theta3 (degrees)
+            // OUTPUT: x0, y0, z0 (RoboDK frame)
             // ================================
-            // cấu trúc hàm:
-            // public static int tên_hàm(tham_số, out biến...)
             public static int delta_calcForward(
                 double theta1,
                 double theta2,
@@ -71,22 +59,20 @@ namespace RobotDelta
                 out double y0,
                 out double z0)
             {
-                // khởi tạo giá trị mặc định
                 x0 = 0;
                 y0 = 0;
                 z0 = 0;
 
-                // chuyển đơn vị độ sang radian
+                // Convert degrees to radians for trig
                 double dtr = pi / 180.0;
+                theta1 *= dtr;
+                theta2 *= dtr;
+                theta3 *= dtr;
 
-                theta1 *= dtr; // θ1(rad)=θ1(deg)⋅pi / 180.0
-                theta2 *= dtr; // θ2(rad)=θ2(deg)⋅pi / 180.0
-                theta3 *= dtr; // θ3(rad)=θ3(deg)⋅pi / 180.0
-
-                // khoảng cách từ tâm đến cạnh
+                // distance from center to edge
                 double t = (f - e) * tan30 / 2.0;
 
-                // ===== Tọa độ các khớp J1, J2, J3 =====
+                // coordinates of the joints J1,J2,J3 in the Delta frame
                 double yj1 = -(t + rf * Math.Cos(theta1));
                 double zj1 = -rf * Math.Sin(theta1);
 
@@ -98,64 +84,54 @@ namespace RobotDelta
                 double xj3 = -yj3 * tan60;
                 double zj3 = -rf * Math.Sin(theta3);
 
-                // ===== Tính toán trung gian =====
+                // intermediate computations
                 double dnm = (yj2 - yj1) * xj3 - (yj3 - yj1) * xj2;
 
                 double w1 = yj1 * yj1 + zj1 * zj1;
                 double w2 = xj2 * xj2 + yj2 * yj2 + zj2 * zj2;
                 double w3 = xj3 * xj3 + yj3 * yj3 + zj3 * zj3;
 
-                // ===== Tính x0, y0 theo z =====
                 double a1 = (zj2 - zj1) * (yj3 - yj1) - (zj3 - zj1) * (yj2 - yj1);
+                double b1 = -((w2 - w1) * (yj3 - yj1) - (w3 - w1) * (yj2 - yj1)) / 2.0;
 
-                double b1 =
-                    -((w2 - w1) * (yj3 - yj1) - (w3 - w1) * (yj2 - yj1)) / 2.0;
+                double a2 = -(zj2 - zj1) * xj3 + (zj3 - zj1) * xj2;
+                double b2 = ((w2 - w1) * xj3 - (w3 - w1) * xj2) / 2.0;
 
-                double a2 =
-                    -(zj2 - zj1) * xj3 + (zj3 - zj1) * xj2;
-
-                double b2 =
-                    ((w2 - w1) * xj3 - (w3 - w1) * xj2) / 2.0;
-
-                // ===== Giải phương trình bậc 2 theo z =====
                 double a = a1 * a1 + a2 * a2 + dnm * dnm;
+                double b = 2 * (a1 * b1 + a2 * (b2 - yj1 * dnm) - zj1 * dnm * dnm);
+                double c = (b2 - yj1 * dnm) * (b2 - yj1 * dnm) + b1 * b1 + dnm * dnm * (zj1 * zj1 - re * re);
 
-                double b =
-                    2 * (a1 * b1 + a2 * (b2 - yj1 * dnm) - zj1 * dnm * dnm);
-
-                double c =
-                    (b2 - yj1 * dnm) * (b2 - yj1 * dnm)
-                    + b1 * b1
-                    + dnm * dnm * (zj1 * zj1 - re * re);
-
-                double d = b * b - 4.0 * a * c; // delta
-
-                // nếu vô nghiệm
+                double d = b * b - 4.0 * a * c;
                 if (d < 0)
                 {
-                    return -1;
+                    return -1; // no solution
                 }
 
-                // nghiệm trong hệ Delta
-                z0 = -0.5 * (b + Math.Sqrt(d)) / a;
-                x0 = (a1 * z0 + b1) / dnm;
-                y0 = (a2 * z0 + b2) / dnm;
+                // Solve quadratic for z in Delta frame
+                double zDelta = -0.5 * (b + Math.Sqrt(d)) / a;
+                double xDelta = (a1 * zDelta + b1) / dnm;
+                double yDelta = (a2 * zDelta + b2) / dnm;
 
-                // Chuyển sang hệ RoboDK
-                double xDelta = x0;
-                double zDelta = z0;
+                // Convert from Delta frame to RoboDK frame.
+                // delta_calcInverse used:
+                //   x0_delta = -yRobo
+                //   y0_delta = -xRobo
+                //   z0_delta = zRobo - offset
+                // So invert those:
+                double xRobo = -yDelta;
+                double yRobo = -xDelta;
+                double zRobo = zDelta - 316.969;
 
-                x0 = -yDelta;
-                y0 = -xDelta;
-
-                // Offset Z 
-                z0 = zDelta - 316.969;
+                // assign outputs (RoboDK frame)
+                x0 = xRobo;
+                y0 = yRobo;
+                z0 = zRobo;
 
                 return 0;
             }
 
             // ================================
-            // HÀM PHỤ: TÍNH GÓC TRONG MẶT PHẲNG YZ
+            // HELPER: compute angle in YZ plane
             // ================================
             private static int delta_calcAngleYZ(
                 double x0,
@@ -165,11 +141,11 @@ namespace RobotDelta
             {
                 theta = 0;
 
-                // dịch hệ tọa độ
+                // translate coordinates
                 double yj1 = -0.5 * (1.0 / sqrt3) * f;
                 y0 = y0 - 0.5 * (1.0 / sqrt3) * e;
 
-                // dạng đường thẳng: z = a + b*y
+                // line: z = a + b*y
                 double a =
                     (x0 * x0 + y0 * y0 + z0 * z0
                     + rf * rf - re * re - yj1 * yj1)
@@ -177,7 +153,6 @@ namespace RobotDelta
 
                 double b = (yj1 - y0) / z0;
 
-                // delta
                 double d =
                     -(a + b * yj1) * (a + b * yj1)
                     + rf * (b * b * rf + rf);
@@ -187,27 +162,23 @@ namespace RobotDelta
                     return -1;
                 }
 
-                // chọn nghiệm ngoài
                 double yj =
                     (yj1 - a * b - Math.Sqrt(d))
                     / (b * b + 1);
 
                 double zj = a + b * yj;
 
-                // tính góc theta
                 theta =
-            Math.Atan(-zj / (yj1 - yj))
-            * 180.0 / pi;
+                    Math.Atan(-zj / (yj1 - yj))
+                    * 180.0 / pi;
 
                 if (yj > yj1)
                 {
                     theta += 180.0;
                 }
 
-                // làm tròn 6 số lẻ
                 theta = Math.Round(theta, 3);
 
-                // đổi giá trị -0.0 -> 0.0 
                 if (Math.Abs(theta) < 0.001)
                 {
                     theta = 0;
@@ -217,111 +188,59 @@ namespace RobotDelta
             }
 
             // ================================
-            // ĐỘNG HỌC NGHỊCH (INVERSE)
-            // INPUT: x0, y0, z0
-            // OUTPUT: theta1, theta2, theta3
+            // INVERSE KINEMATICS (RoboDK frame -> Delta frame)
+            // INPUT: x0, y0, z0 (RoboDK frame)
+            // OUTPUT: theta1, theta2, theta3 (degrees)
             // ================================
-            public static int delta_calcInverse(
-                double x0,
-                double y0,
-                double z0,
-                out double theta1,
-                out double theta2,
-                out double theta3)
-            {
-                // khởi tạo giá trị mặc định
-                theta1 = 0;
-                theta2 = 0;
-                theta3 = 0;
-                // Chuyển hệ Delta <-> robodk
+public static int delta_calcInverse(
+    double x0,
+    double y0,
+    double z0,
+    out double theta1,
+    out double theta2,
+    out double theta3)
+{
+    theta1 = 0;
+    theta2 = 0;
+    theta3 = 0;
 
-                double xRobo = x0;
-                double yRobo = y0;
-                double zRobo = z0;
+    // Inputs are in RoboDK frame. Convert RoboDK -> Delta frame (inverse of forward mapping)
+    // forward mapped:
+    //   xRobo = -yDelta
+    //   yRobo = -xDelta
+    //   zRobo = zDelta + offset
+    // therefore:
+    double xRobo = x0;
+    double yRobo = y0;
+    double zRobo = z0;
 
-                x0 = -yRobo;
-                y0 = -xRobo;
+    double xDelta = -yRobo;
+    double yDelta = -xRobo;
+    double zDelta = zRobo + 316.969; // reverse the Z offset applied in forward
 
-                // Offset Z
-                z0 = zRobo - 316.969;
-                int status;
+    // Guard against invalid z (delta_calcAngleYZ divides by z)
+    if (Math.Abs(zDelta) < 1e-12)
+    {
+        return -1;
+    }
 
-                // Tay 1 của robot trong mặt phẳng YZ
-                status = delta_calcAngleYZ(x0, y0, z0, out theta1);
+    int status = delta_calcAngleYZ(xDelta, yDelta, zDelta, out theta1);
+    if (status != 0) return -1;
 
-                if (status != 0)
-                {
-                    return -1;
-                }
+    // Arm 2 (+120 deg rotation)
+    double xj2 = xDelta * cos120 + yDelta * sin120;
+    double yj2 = yDelta * cos120 - xDelta * sin120;
+    status = delta_calcAngleYZ(xj2, yj2, zDelta, out theta2);
+    if (status != 0) return -1;
 
-                // ================================
-                // Tay 2 và tay 3 của robot trong mặt phẳng YZ
-                // sau khi đã quay hệ tọa độ
-                // ================================
+    // Arm 3 (-120 deg rotation)
+    double xj3 = xDelta * cos120 - yDelta * sin120;
+    double yj3 = yDelta * cos120 + xDelta * sin120;
+    status = delta_calcAngleYZ(xj3, yj3, zDelta, out theta3);
 
-                // TAY 2 quay +120 độ
-                double xj2 = x0 * cos120 + y0 * sin120;
-                double yj2 = y0 * cos120 - x0 * sin120;
-
-                status = delta_calcAngleYZ(xj2, yj2, z0, out theta2);
-
-                if (status != 0)
-                {
-                    return -1;
-                }
-
-                // TAY 3 quay -120 độ
-                double xj3 = x0 * cos120 - y0 * sin120;
-                double yj3 = y0 * cos120 + x0 * sin120;
-
-                status = delta_calcAngleYZ(xj3, yj3, z0, out theta3);
-
-                return status;
-            }
-
-            // ================================
-            // TEST
-            // ================================
-            static void MainTest(string[] args)
-            {
-                // test forward
-                Console.WriteLine("=== FORWARD ===");
-
-                double x, y, z;
-
-                int err = delta_calcForward(
-                    0,
-                    0,
-                    0,
-                    out x,
-                    out y,
-                    out z);
-                // đổi kết quả hiển thị -0 -> 0
-                if (Math.Abs(x) < 0.001) x = 0;
-                if (Math.Abs(y) < 0.001) y = 0;
-                if (Math.Abs(z) < 0.001) z = 0;
-
-                Console.WriteLine($"x = {x:F3}");
-                Console.WriteLine($"y = {y:F3}");
-                Console.WriteLine($"z = {z:F3}");
-
-                // test inverse
-                Console.WriteLine("\n=== INVERSE ===");
-
-                double t1, t2, t3;
-
-                err = delta_calcInverse(
-                    x,
-                    y,
-                    z,
-                    out t1,
-                    out t2,
-                    out t3);
-
-                Console.WriteLine("theta1 = " + t1);
-                Console.WriteLine("theta2 = " + t2);
-                Console.WriteLine("theta3 = " + t3);
-            }
+    return status;
+}
+          
         }
     }
 }
