@@ -12,11 +12,24 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 namespace parallel_ABB_with_ACS
 {
     public partial class Form1 : Form
     {
+        private void UpdateXYZTextbox()
+        {
+            textBox10.Text = currentX.ToString("F3");
+            textBox11.Text = currentY.ToString("F3");
+            textBox12.Text = currentZ.ToString("F3");
+        }
 
+        private void UpdateThetaTextbox(double t1, double t2, double t3)
+        {
+            Giatritheta1.Text = t1.ToString("F3");
+            Giatritheta2.Text = t2.ToString("F3");
+            Giatritheta3.Text = t3.ToString("F3");
+        }
         private CancellationTokenSource jogCTS;
         private bool jogRunning = false;
         private Api _ACS;
@@ -50,7 +63,13 @@ namespace parallel_ABB_with_ACS
         // open ACS window when run code//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void Form1_Load(object sender, EventArgs e)
         {
+            cboShape.Items.Clear();
 
+            cboShape.Items.Add("Circle");
+            cboShape.Items.Add("Square");
+            cboShape.Items.Add("Triangle");
+
+            cboShape.SelectedIndex = -1;
 
             string path = @"C:\Program Files (x86)\ACS Motion Control\SPiiPlus ADK Suite v3.13.01\SPiiPlus MMI Application Studio\ACS.Framework.exe";
 
@@ -71,6 +90,7 @@ namespace parallel_ABB_with_ACS
             {
                 MessageBox.Show("Connected SPiiPluss MMI Application Studio");
             }
+
         }
         private void TernminateUMD_Connection()
         {
@@ -337,7 +357,7 @@ namespace parallel_ABB_with_ACS
                 currentX = 0;
                 currentY = 0;
                 currentZ = -937.535;
-
+                MoveXYZ(currentX, currentY, currentZ);
                 // Tính động học nghịch
                 double[] theta = DeltaKinematics.Inverse(currentX, currentY, currentZ);
 
@@ -362,28 +382,6 @@ namespace parallel_ABB_with_ACS
                 MessageBox.Show(ex.Message);
             }
         }
-
-        ////===============================================================================///
-        ////////////Chạy JOG MODE////////////////////////////////////////////////////////
-        private void MoveJoint(double t1, double t2, double t3)
-        {
-            Axis[] axes = {
-                Axis.ACSC_AXIS_0,
-                Axis.ACSC_AXIS_1,
-                Axis.ACSC_AXIS_2,
-                Axis.ACSC_NONE   // terminator required by multi-axis API
-            };
-
-            double[] point = {
-                t1,
-                t2,
-                t3,
-                0.0 // dummy for terminator slot
-            };
-
-            _ACS.ToPointM(MotionFlags.ACSC_AMF_WAIT, axes, point);
-            _ACS.GoM(axes);
-        }
         // Try to move to x,y,z; returns true on success
         private bool MoveXYZ(double x, double y, double z)
         {
@@ -391,17 +389,165 @@ namespace parallel_ABB_with_ACS
 
             if (theta == null)
             {
-                // Handle workspace limit once and prevent further jog clicks
                 HandleWorkspaceLimitReached();
                 return false;
             }
-            
-            workspaceError = false;
+
+            currentX = x;
+            currentY = y;
+            currentZ = z;
+
+            UpdateXYZTextbox();
+            UpdateThetaTextbox(theta[0], theta[1], theta[2]);
 
             MoveJoint(theta[0], theta[1], theta[2]);
 
             return true;
         }
+
+        // sharp_mode/////////
+        private void cboShape_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            switch (cboShape.Text)
+            {
+                case "Circle":
+                    DrawCircle();
+                    break;
+                 
+                case "Square":
+                    DrawSquare();
+                    break;
+
+                case "Triangle":
+                    DrawTriangle();
+                    break;
+            }
+        }
+        //nội suy hình//
+        private void DrawLine(double x1, double y1, double x2, double y2)
+        {
+            double z = currentZ;          // Giữ nguyên Z hiện tại
+            double step = 2.0;            // Bước nội suy (mm)
+
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+
+            double length = Math.Sqrt(dx * dx + dy * dy);
+
+            int n = (int)(length / step);
+
+            if (n < 1)
+                n = 1;
+
+            for (int i = 0; i <= n; i++)
+            {
+                double t = (double)i / n;
+
+                double x = x1 + dx * t;
+                double y = y1 + dy * t;
+
+                if (!MoveXYZ(x, y, z))
+                    return;
+
+                Application.DoEvents();
+                Thread.Sleep(20);
+            }
+        }
+        // hình vuông//
+        private void DrawSquare()
+        {
+            double size = 80;
+
+            double x1 = -size / 2;
+            double y1 = -size / 2;
+
+            double x2 = size / 2;
+            double y2 = -size / 2;
+
+            double x3 = size / 2;
+            double y3 = size / 2;
+
+            double x4 = -size / 2;
+            double y4 = size / 2;
+
+            DrawLine(x1, y1, x2, y2);
+            DrawLine(x2, y2, x3, y3);
+            DrawLine(x3, y3, x4, y4);
+            DrawLine(x4, y4, x1, y1);
+            MessageBox.Show("Square defined");
+        }
+        //tam giác//
+        private void DrawTriangle()
+        {
+            double size = 100;
+
+            double h = Math.Sqrt(3) / 2 * size;
+
+            double x1 = 0;
+            double y1 = h / 2;
+
+            double x2 = -size / 2;
+            double y2 = -h / 2;
+
+            double x3 = size / 2;
+            double y3 = -h / 2;
+
+            DrawLine(x1, y1, x2, y2);
+            DrawLine(x2, y2, x3, y3);
+            DrawLine(x3, y3, x1, y1);
+            MessageBox.Show("Triangle defined");
+        }
+        // hình tròn//  
+        private void DrawCircle()
+        {
+            double radius = 40;
+            double z = currentZ;
+
+            for (int i = 0; i <= 360; i += 2)
+            {
+                double rad = i * Math.PI / 180.0;
+
+                double x = radius * Math.Cos(rad);
+                double y = radius * Math.Sin(rad);
+
+                MoveXYZ(x, y, z);
+               
+                Application.DoEvents();
+            }
+            MessageBox.Show("Circle defined");
+        }
+        
+        ////===============================================================================///
+        ////////////Chạy JOG MODE////////////////////////////////////////////////////////
+        private void MoveJoint(double t1, double t2, double t3)
+        {
+            Axis[] axes =
+     {
+        Axis.ACSC_AXIS_0,
+        Axis.ACSC_AXIS_1,
+        Axis.ACSC_AXIS_2,
+        Axis.ACSC_NONE
+    };
+
+            double[] point =
+            {
+        t1,
+        t2,
+        t3,
+        0
+    };
+
+            _ACS.ToPointM(MotionFlags.ACSC_NONE, axes, point);
+            _ACS.GoM(axes);
+
+            // Chờ robot chạy xong
+            while (_ACS.GetMotorState(Axis.ACSC_AXIS_0).HasFlag(MotorStates.ACSC_MST_MOVE))
+            {
+                Application.DoEvents();
+                Thread.Sleep(5);
+            }
+        }
+     ///
 
         private void HandleWorkspaceLimitReached()
         {
@@ -456,7 +602,7 @@ namespace parallel_ABB_with_ACS
             double newX = currentX;
             double newY = currentY;
             double newZ = currentZ;
-
+   
             switch (currentJog)
             {
                 case JogDirection.XPlus:
@@ -501,7 +647,7 @@ namespace parallel_ABB_with_ACS
             currentY = newY;
             currentZ = newZ;
 
-            MoveJoint(theta[0], theta[1], theta[2]);
+            MoveXYZ(newX, newY, newZ);
         }
         private void dichuyencongX_MouseDown(object sender, MouseEventArgs e)
         {
@@ -617,8 +763,69 @@ namespace parallel_ABB_with_ACS
             jogTimer.Stop();
             currentJog = JogDirection.None;
         }
+        // điền tọa độ góc và vị trí//////////
+        private void button2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                currentX = Convert.ToDouble(textBox10.Text);
+                currentY = Convert.ToDouble(textBox11.Text);
+                currentZ = Convert.ToDouble(textBox12.Text);
 
-       
+                double[] theta = DeltaKinematics.Inverse(currentX, currentY, currentZ);
+
+                if (theta == null)
+                {
+                    MessageBox.Show("Điểm nằm ngoài vùng làm việc.");
+                    return;
+                }
+
+                // Hiển thị góc
+                Giatritheta1.Text = theta[0].ToString("F3");
+                Giatritheta2.Text = theta[1].ToString("F3");
+                Giatritheta3.Text = theta[2].ToString("F3");
+
+                // Chạy ACS
+                MoveJoint(theta[0], theta[1], theta[2]);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void capnhatgoc_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double t1 = Convert.ToDouble(Giatritheta1.Text);
+                double t2 = Convert.ToDouble(Giatritheta2.Text);
+                double t3 = Convert.ToDouble(Giatritheta3.Text);
+
+                double[] xyz = DeltaKinematics.Forward(t1, t2, t3);
+
+                if (xyz == null)
+                {
+                    MessageBox.Show("Điểm nằm ngoài vùng làm việc");
+                    return;
+                }
+
+                currentX = xyz[0];
+                currentY = xyz[1];
+                currentZ = xyz[2];
+
+                UpdateXYZTextbox();
+                UpdateThetaTextbox(t1, t2, t3);
+
+                // Chạy robot
+                MoveJoint(t1, t2, t3);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+      
     }
 }
 

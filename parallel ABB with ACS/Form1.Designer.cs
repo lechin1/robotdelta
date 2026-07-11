@@ -148,7 +148,7 @@
             this.dichuyencongY = new System.Windows.Forms.Button();
             this.dichuyencongZ = new System.Windows.Forms.Button();
             this.Sharpemodepositions = new System.Windows.Forms.GroupBox();
-            this.selectsharp = new System.Windows.Forms.ComboBox();
+            this.cboShape = new System.Windows.Forms.ComboBox();
             this.groupBox10 = new System.Windows.Forms.GroupBox();
             this.GiatritoadoZ = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
@@ -342,6 +342,7 @@
             this.button2.TabIndex = 22;
             this.button2.Text = "Update position";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // groupBox12
             // 
@@ -442,6 +443,7 @@
             this.capnhatgoc.TabIndex = 23;
             this.capnhatgoc.Text = "Update Degrees";
             this.capnhatgoc.UseVisualStyleBackColor = true;
+            this.capnhatgoc.Click += new System.EventHandler(this.capnhatgoc_Click);
             // 
             // groupBox7
             // 
@@ -1367,7 +1369,7 @@
             // 
             // Sharpemodepositions
             // 
-            this.Sharpemodepositions.Controls.Add(this.selectsharp);
+            this.Sharpemodepositions.Controls.Add(this.cboShape);
             this.Sharpemodepositions.Location = new System.Drawing.Point(784, 100);
             this.Sharpemodepositions.Name = "Sharpemodepositions";
             this.Sharpemodepositions.Size = new System.Drawing.Size(239, 51);
@@ -1375,13 +1377,14 @@
             this.Sharpemodepositions.TabStop = false;
             this.Sharpemodepositions.Text = "Sharpe_mode";
             // 
-            // selectsharp
+            // cboShape
             // 
-            this.selectsharp.FormattingEnabled = true;
-            this.selectsharp.Location = new System.Drawing.Point(13, 19);
-            this.selectsharp.Name = "selectsharp";
-            this.selectsharp.Size = new System.Drawing.Size(209, 21);
-            this.selectsharp.TabIndex = 27;
+            this.cboShape.FormattingEnabled = true;
+            this.cboShape.Location = new System.Drawing.Point(13, 19);
+            this.cboShape.Name = "cboShape";
+            this.cboShape.Size = new System.Drawing.Size(209, 21);
+            this.cboShape.TabIndex = 27;
+            this.cboShape.SelectedIndexChanged += new System.EventHandler(this.cboShape_SelectedIndexChanged);
             // 
             // groupBox10
             // 
@@ -1600,7 +1603,7 @@
         private System.Windows.Forms.Button dichuyencongY;
         private System.Windows.Forms.Button dichuyencongZ;
         private System.Windows.Forms.GroupBox Sharpemodepositions;
-        private System.Windows.Forms.ComboBox selectsharp;
+        private System.Windows.Forms.ComboBox cboShape;
         private System.Windows.Forms.TextBox txtJogStep;
         private System.Windows.Forms.Label Value_JOG;
         private System.Windows.Forms.Label lblPRG_Status;
