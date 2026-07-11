@@ -1,0 +1,12 @@
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\bin\Debug\parallel ABB with ACS.exe.config
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\bin\Debug\parallel ABB with ACS.exe
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\bin\Debug\parallel ABB with ACS.pdb
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\bin\Debug\ACS.SPiiPlusNET.dll
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel ABB with ACS.csproj.AssemblyReference.cache
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel_ABB_with_ACS.Form1.resources
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel_ABB_with_ACS.Properties.Resources.resources
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel ABB with ACS.csproj.GenerateResource.cache
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel ABB with ACS.csproj.CoreCompileInputs.cache
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel.09194830.Up2Date
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel ABB with ACS.exe
+C:\Users\ADMIN\source\repos\parallel ABB with ACS\obj\Debug\parallel ABB with ACS.pdb
