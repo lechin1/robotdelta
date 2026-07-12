@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,12 @@ namespace parallel_ABB_with_ACS
 {
     public partial class Form1 : Form
     {
+       
+
+        private IntPtr oldParent = IntPtr.Zero;
+      
+
+        private IntPtr ACSHandle = IntPtr.Zero;
         private void UpdateXYZTextbox()
         {
             textBox10.Text = currentX.ToString("F3");
@@ -32,6 +39,7 @@ namespace parallel_ABB_with_ACS
         }
         private CancellationTokenSource jogCTS;
         private bool jogRunning = false;
+        private volatile bool cancelMotion = false;
         private Api _ACS;
         private bool m_bConnected = false;
         private int m_nTotalAxis = 0;
@@ -39,6 +47,7 @@ namespace parallel_ABB_with_ACS
         private Axis[] m_arrAxisList = null;
         private System.Windows.Forms.ComboBox cboAxisNo;
         private bool workspaceError = false;
+        private bool stopAllPressed = false;
         // tọa độ gốc////
         private double currentX = 0;
         private double currentY = 0;
@@ -63,8 +72,8 @@ namespace parallel_ABB_with_ACS
         // open ACS window when run code//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void Form1_Load(object sender, EventArgs e)
         {
-            cboShape.Items.Clear();
 
+            cboShape.Items.Clear();
             cboShape.Items.Add("Circle");
             cboShape.Items.Add("Square");
             cboShape.Items.Add("Triangle");
@@ -160,19 +169,11 @@ namespace parallel_ABB_with_ACS
                 // Update current motion paramter to UI.
                 UpdateProfile();
 
-                strTemp = _ACS.Transaction("?SYSINFO(10)");
-                m_nTotalBuffer = Convert.ToInt32(strTemp.Trim());
-                for (i = 0; i < m_nTotalBuffer; i++)
-                {
-                    ((ComboBox)cboBufferNo).Items.Add(i.ToString());
-                }
-                ((ComboBox)cboBufferNo).SelectedIndex = 0;
-
                 btnOpen.Enabled = false;
                 btnClose.Enabled = true;
 
                 // Set updating timer
-                tmrMonitor.Interval = 50;
+                tmrMonitor.Interval = 30;
                 tmrMonitor.Start();
             }
             catch (Exception ex)
@@ -199,8 +200,13 @@ namespace parallel_ABB_with_ACS
 
             InitializeComponent();
             // Khởi tạo Timer JOG
+            txtVel.Leave += MotionProfile_Leave;
+            txtAcc.Leave += MotionProfile_Leave;
+            txtDec.Leave += MotionProfile_Leave;
+            txtKdec.Leave += MotionProfile_Leave;
+            txtJerk.Leave += MotionProfile_Leave;
             jogTimer = new System.Windows.Forms.Timer();
-            jogTimer.Interval = 30;      // 30ms
+            jogTimer.Interval = 150;      // 150ms
             jogTimer.Tick += JogTimer_Tick;
 
             // Ensure cboAxisNo exists (some designer versions may not have created it)
@@ -244,34 +250,219 @@ namespace parallel_ABB_with_ACS
         {
             throw new NotImplementedException();
         }
-
+        // speed setting//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         private void UpdateProfile()
         {
-            if (m_bConnected)
+            if (!m_bConnected) return;
+            //3 trục như nhau -->chỉ cần đọc trạng thái trục 0 //////////////////////////////
+            txtVel.Text = _ACS.GetVelocity(Axis.ACSC_AXIS_0).ToString();
+            txtAcc.Text = _ACS.GetAcceleration(Axis.ACSC_AXIS_0).ToString();
+            txtDec.Text = _ACS.GetDeceleration(Axis.ACSC_AXIS_0).ToString();
+            txtKdec.Text = _ACS.GetKillDeceleration(Axis.ACSC_AXIS_0).ToString();
+            txtJerk.Text = _ACS.GetJerk(Axis.ACSC_AXIS_0).ToString();
+        }
+        private void MotionProfile_Leave(object sender, EventArgs e)
+        {
+            if (!m_bConnected) return;
+
+            try
             {
-                txtVel.Text = _ACS.GetVelocity((Axis)cboAxisNo.SelectedIndex).ToString();
-                txtAcc.Text = _ACS.GetAcceleration((Axis)cboAxisNo.SelectedIndex).ToString();
-                txtDec.Text = _ACS.GetDeceleration((Axis)cboAxisNo.SelectedIndex).ToString();
-                txtKdec.Text = _ACS.GetKillDeceleration((Axis)cboAxisNo.SelectedIndex).ToString();
-                txtJerk.Text = _ACS.GetJerk((Axis)cboAxisNo.SelectedIndex).ToString();
+                TextBox txt = sender as TextBox;
+                if (txt == null) return;
+
+                if (!double.TryParse(txt.Text, out double value))
+                    return;
+
+                Axis[] axes =
+                {
+            Axis.ACSC_AXIS_0,
+            Axis.ACSC_AXIS_1,
+            Axis.ACSC_AXIS_2
+        };
+
+                foreach (Axis axis in axes)
+                {
+                    if (txt == txtVel)
+                        _ACS.SetVelocityImm(axis, value);
+
+                    else if (txt == txtAcc)
+                        _ACS.SetAcceleration(axis, value);
+
+                    else if (txt == txtDec)
+                        _ACS.SetDeceleration(axis, value);
+
+                    else if (txt == txtKdec)
+                        _ACS.SetKillDeceleration(axis, value);
+
+                    else if (txt == txtJerk)
+                        _ACS.SetJerk(axis, value);
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+        private void cboAxisNo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateProfile();
         }
         // chua xử lý ---------------------------------------------------//
         private void tmrMonitor_Tick(object sender, EventArgs e)
         {
-            // Get selected axis number
-            int iAxisNo = cboAxisNo.SelectedIndex;
-            // Get selected buffer number
-            int iBufferNo = cboBufferNo.SelectedIndex;
+            if (!m_bConnected)
+                return;
 
-            // If previously disabled due to workspace limit, re-enable when current position is valid again
-            if (workspaceError)
+            try
             {
-                double[] theta = DeltaKinematics.Inverse(currentX, currentY, currentZ);
-                if (theta != null)
+                for (int i = 0; i < 3; i++)
                 {
-                    EnableJogButtons();
+                    //================= Đọc giá trị =================
+                    double rpos = _ACS.GetRPosition((Axis)i);
+                    double fpos = _ACS.GetFPosition((Axis)i);
+
+                    double pe = (double)_ACS.ReadVariable(
+                        "PE",
+                        ProgramBuffer.ACSC_NONE,
+                        i,
+                        i);
+
+                    double fvel = (double)_ACS.ReadVariable(
+                        "FVEL",
+                        ProgramBuffer.ACSC_NONE,
+                        i,
+                        i);
+
+                    //================= Đọc trạng thái Motor =================
+                    MotorStates state = _ACS.GetMotorState((Axis)i);
+
+                    switch (i)
+                    {
+                        case 0:
+
+                            //---------------- Position ----------------
+                            txtRPOS0.Text = rpos.ToString("0.000");
+                            txtFPOS0.Text = fpos.ToString("0.000");
+                            txtFVEL0.Text = fvel.ToString("0.000");
+                            txtPE0.Text = pe.ToString("0.000");
+
+                            //---------------- Moving ----------------
+                            labelMov0.Image =
+                                ((state & MotorStates.ACSC_MST_MOVE) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- Accelerating ----------------
+                            labelACC0.Image =
+                                ((state & MotorStates.ACSC_MST_ACC) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- In Position ----------------
+                            labelPosi0.Image =
+                                ((state & MotorStates.ACSC_MST_INPOS) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- Enable / Disable ----------------
+                            if ((state & MotorStates.ACSC_MST_ENABLE) != 0)
+                            {
+                                labelEnable0.Image = Properties.Resources.On;
+                                lblstop0.Image = Properties.Resources.Off;
+                            }
+                            else
+                            {
+                                labelEnable0.Image = Properties.Resources.Off;
+                                lblstop0.Image = Properties.Resources.On;
+                            }
+
+                            break;
+
+                        case 1:
+
+                            //---------------- Position ----------------
+                            txtRPOS1.Text = rpos.ToString("0.000");
+                            txtFPOS1.Text = fpos.ToString("0.000");
+                            txtFVEL1.Text = fvel.ToString("0.000");
+                            txtPE1.Text = pe.ToString("0.000");
+
+                            //---------------- Moving ----------------
+                            labelMov1.Image =
+                                ((state & MotorStates.ACSC_MST_MOVE) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- Accelerating ----------------
+                            labelACC1.Image =
+                                ((state & MotorStates.ACSC_MST_ACC) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- In Position ----------------
+                            labelPosi1.Image =
+                                ((state & MotorStates.ACSC_MST_INPOS) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- Enable / Disable ----------------
+                            if ((state & MotorStates.ACSC_MST_ENABLE) != 0)
+                            {
+                                labelEnable1.Image = Properties.Resources.On;
+                                lblstop1.Image = Properties.Resources.Off;
+                            }
+                            else
+                            {
+                                labelEnable1.Image = Properties.Resources.Off;
+                                lblstop1.Image = Properties.Resources.On;
+                            }
+
+                            break;
+
+                        case 2:
+
+                            //---------------- Position ----------------
+                            txtRPOS2.Text = rpos.ToString("0.000");
+                            txtFPOS2.Text = fpos.ToString("0.000");
+                            txtFVEL2.Text = fvel.ToString("0.000");
+                            txtPE2.Text = pe.ToString("0.000");
+
+                            //---------------- Moving ----------------
+                            labelMov2.Image =
+                                ((state & MotorStates.ACSC_MST_MOVE) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- Accelerating ----------------
+                            labelACC2.Image =
+                                ((state & MotorStates.ACSC_MST_ACC) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- In Position ----------------
+                            labelPosi2.Image =
+                                ((state & MotorStates.ACSC_MST_INPOS) != 0)
+                                ? Properties.Resources.On
+                                : Properties.Resources.Off;
+
+                            //---------------- Enable / Disable ----------------
+                            if ((state & MotorStates.ACSC_MST_ENABLE) != 0)
+                            {
+                                labelEnable2.Image = Properties.Resources.On;
+                                lblstop2.Image = Properties.Resources.Off;
+                            }
+                            else
+                            {
+                                labelEnable2.Image = Properties.Resources.Off;
+                                lblstop2.Image = Properties.Resources.On;
+                            }
+
+                            break;
+                    }
                 }
+            }
+            catch
+            {
+                // Tránh popup liên tục nếu controller đang bận hoặc mất kết nối
             }
         }
         //------------------------------------------------------------//
@@ -287,10 +478,7 @@ namespace parallel_ABB_with_ACS
             IPtxt.Enabled = false;
             Porttxt.Enabled = false;
         }
-        private void cboAxisNo_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            UpdateProfile();
-        }
+
         /// <summary>
         /// // khởi động và dừng tất cả các đông cơ////
         /// </summary>
@@ -367,7 +555,7 @@ namespace parallel_ABB_with_ACS
                     return;
                 }
 
-  
+
 
                 // Chạy robot về Home
                 MoveJoint(theta[0], theta[1], theta[2]);
@@ -385,6 +573,8 @@ namespace parallel_ABB_with_ACS
         // Try to move to x,y,z; returns true on success
         private bool MoveXYZ(double x, double y, double z)
         {
+            stopAllPressed = false;
+            STopall_.Image = Properties.Resources.Off;
             double[] theta = DeltaKinematics.Inverse(x, y, z);
 
             if (theta == null)
@@ -393,14 +583,25 @@ namespace parallel_ABB_with_ACS
                 return false;
             }
 
+            workspaceError = false;
+
             currentX = x;
             currentY = y;
             currentZ = z;
 
-            UpdateXYZTextbox();
-            UpdateThetaTextbox(theta[0], theta[1], theta[2]);
+            // Cập nhật textbox XYZ
+            textBox10.Text = x.ToString("0.000");
+            textBox11.Text = y.ToString("0.000");
+            textBox12.Text = z.ToString("0.000");
+
+            // Cập nhật textbox Theta
+            Giatritheta1.Text = theta[0].ToString("0.000");
+            Giatritheta2.Text = theta[1].ToString("0.000");
+            Giatritheta3.Text = theta[2].ToString("0.000");
 
             MoveJoint(theta[0], theta[1], theta[2]);
+
+            WaitMotionDone();
 
             return true;
         }
@@ -413,7 +614,7 @@ namespace parallel_ABB_with_ACS
                 case "Circle":
                     DrawCircle();
                     break;
-                 
+
                 case "Square":
                     DrawSquare();
                     break;
@@ -426,8 +627,9 @@ namespace parallel_ABB_with_ACS
         //nội suy hình//
         private void DrawLine(double x1, double y1, double x2, double y2)
         {
-            double z = currentZ;          // Giữ nguyên Z hiện tại
-            double step = 2.0;            // Bước nội suy (mm)
+            double z = currentZ;
+
+            double step = 2;
 
             double dx = x2 - x1;
             double dy = y2 - y1;
@@ -441,21 +643,52 @@ namespace parallel_ABB_with_ACS
 
             for (int i = 0; i <= n; i++)
             {
+                if (cancelMotion)
+                    return;
+
                 double t = (double)i / n;
 
                 double x = x1 + dx * t;
                 double y = y1 + dy * t;
 
-                if (!MoveXYZ(x, y, z))
-                    return;
+                MoveXYZ(x, y, z);
+
+                WaitMotionDone();
 
                 Application.DoEvents();
-                Thread.Sleep(20);
             }
         }
+
+        private void WaitMotionDone()
+        {
+            while (true)
+            {
+                if (cancelMotion)
+                    return;
+
+                MotorStates s0 = _ACS.GetMotorState(Axis.ACSC_AXIS_0);
+                MotorStates s1 = _ACS.GetMotorState(Axis.ACSC_AXIS_1);
+                MotorStates s2 = _ACS.GetMotorState(Axis.ACSC_AXIS_2);
+
+                bool moving =
+                    ((s0 & MotorStates.ACSC_MST_MOVE) != 0) ||
+                    ((s1 & MotorStates.ACSC_MST_MOVE) != 0) ||
+                    ((s2 & MotorStates.ACSC_MST_MOVE) != 0);
+
+                if (!moving)
+                    break;
+
+                Application.DoEvents();
+
+                Thread.Sleep(5);
+            }
+        }
+
         // hình vuông//
         private void DrawSquare()
         {
+            cancelMotion = false;
+
             double size = 80;
 
             double x1 = -size / 2;
@@ -471,14 +704,24 @@ namespace parallel_ABB_with_ACS
             double y4 = size / 2;
 
             DrawLine(x1, y1, x2, y2);
+            if (cancelMotion) return;
+
             DrawLine(x2, y2, x3, y3);
+            if (cancelMotion) return;
+
             DrawLine(x3, y3, x4, y4);
+            if (cancelMotion) return;
+
             DrawLine(x4, y4, x1, y1);
+            if (cancelMotion) return;
+
             MessageBox.Show("Square defined");
         }
         //tam giác//
         private void DrawTriangle()
         {
+            cancelMotion = false;
+
             double size = 100;
 
             double h = Math.Sqrt(3) / 2 * size;
@@ -493,30 +736,45 @@ namespace parallel_ABB_with_ACS
             double y3 = -h / 2;
 
             DrawLine(x1, y1, x2, y2);
+            if (cancelMotion) return;
+
             DrawLine(x2, y2, x3, y3);
+            if (cancelMotion) return;
+
             DrawLine(x3, y3, x1, y1);
+            if (cancelMotion) return;
+
             MessageBox.Show("Triangle defined");
         }
         // hình tròn//  
         private void DrawCircle()
         {
+            cancelMotion = false;
+
             double radius = 40;
             double z = currentZ;
 
             for (int i = 0; i <= 360; i += 2)
             {
+                if (cancelMotion)
+                    return;
+
                 double rad = i * Math.PI / 180.0;
 
                 double x = radius * Math.Cos(rad);
                 double y = radius * Math.Sin(rad);
 
                 MoveXYZ(x, y, z);
-               
+
+                WaitMotionDone();
+
                 Application.DoEvents();
             }
+
             MessageBox.Show("Circle defined");
         }
-        
+
+
         ////===============================================================================///
         ////////////Chạy JOG MODE////////////////////////////////////////////////////////
         private void MoveJoint(double t1, double t2, double t3)
@@ -539,15 +797,8 @@ namespace parallel_ABB_with_ACS
 
             _ACS.ToPointM(MotionFlags.ACSC_NONE, axes, point);
             _ACS.GoM(axes);
-
-            // Chờ robot chạy xong
-            while (_ACS.GetMotorState(Axis.ACSC_AXIS_0).HasFlag(MotorStates.ACSC_MST_MOVE))
-            {
-                Application.DoEvents();
-                Thread.Sleep(5);
-            }
         }
-     ///
+        ///
 
         private void HandleWorkspaceLimitReached()
         {
@@ -559,7 +810,7 @@ namespace parallel_ABB_with_ACS
             // Stop any ongoing jog
             StopJog();
 
-           // Show a single notification
+            // Show a single notification
             MessageBox.Show("Điểm nằm ngoài vùng làm việc.");
         }
 
@@ -602,7 +853,7 @@ namespace parallel_ABB_with_ACS
             double newX = currentX;
             double newY = currentY;
             double newZ = currentZ;
-   
+
             switch (currentJog)
             {
                 case JogDirection.XPlus:
@@ -825,7 +1076,85 @@ namespace parallel_ABB_with_ACS
                 MessageBox.Show(ex.Message);
             }
         }
-      
+        // STOP all//////////////////
+        private void btnHallAll_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Báo cho tất cả các hàm đang chạy biết phải dừng
+                cancelMotion = true;
+
+                // Dừng JOG nếu đang JOG
+                StopJog();
+
+                Axis[] axes =
+                {
+            Axis.ACSC_AXIS_0,
+            Axis.ACSC_AXIS_1,
+            Axis.ACSC_AXIS_2,
+            Axis.ACSC_NONE
+        };
+
+                // Dừng chuyển động ngay
+                _ACS.HaltM(axes);
+                STopall_.Image = Properties.Resources.Error;
+                MessageBox.Show("STOP ALL AXIS");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            ;
+        }
+        // trạng thái các trục///////
+        private void UpdateAxisState(
+      Axis axis,
+      Label lblMoving,
+      Label lblAcc,
+      Label lblInPos,
+      Label lblEnable,
+      Label lblDisable)
+        {
+            try
+            {
+                MotorStates state = _ACS.GetMotorState(axis);
+
+                //---------------- Moving ----------------
+                if ((state & MotorStates.ACSC_MST_MOVE) != 0)
+                    lblMoving.Image = Properties.Resources.On;
+                else
+                    lblMoving.Image = Properties.Resources.Off;
+
+                //---------------- Accelerating ----------------
+                if ((state & MotorStates.ACSC_MST_ACC) != 0)
+                    lblAcc.Image = Properties.Resources.On;
+                else
+                    lblAcc.Image = Properties.Resources.Off;
+
+                //---------------- In Position ----------------
+                if ((state & MotorStates.ACSC_MST_INPOS) != 0)
+                    lblInPos.Image = Properties.Resources.On;
+                else
+                    lblInPos.Image = Properties.Resources.Off;
+
+                //---------------- Enable ----------------
+                if ((state & MotorStates.ACSC_MST_ENABLE) != 0)
+                {
+                    lblEnable.Image = Properties.Resources.On;
+                    lblDisable.Image = Properties.Resources.Off;
+                }
+                else
+                {
+                    lblEnable.Image = Properties.Resources.Off;
+                    lblDisable.Image = Properties.Resources.On;
+                }
+            }
+            catch
+            {
+
+            }
+        }
+   
     }
-}
+    }
 
